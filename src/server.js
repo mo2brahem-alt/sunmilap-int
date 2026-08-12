@@ -480,10 +480,10 @@ async function createKashierSession(draftOrder, order, amount) {
     manualCapture: false,
     customer: {
       email: order.customer.email,
-      reference: orderRef,
+      reference: order.customer.phone.replace(/\D/g, ''),
     },
     saveCard: "optional",
-    retrieveSavedCard: true,
+    retrieveSavedCard: false,
     interactionSource: "ECOMMERCE",
     enable3DS: true,
     serverWebhook,
