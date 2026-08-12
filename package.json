@@ -1,0 +1,16 @@
+{
+  "name": "sunmi-payment-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sun-Mi Shopify + Kashier one-page payment backend",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}

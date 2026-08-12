@@ -1,0 +1,1639 @@
+{% liquid
+  assign sunmi_offer_product = product
+%}
+
+{% if sunmi_offer_product != blank %}
+  {% liquid
+    assign sunmi_order_language = localization.language.iso_code | downcase | split: '-' | first
+    assign sunmi_order_is_arabic = false
+    if sunmi_order_language == 'ar'
+      assign sunmi_order_is_arabic = true
+    endif
+
+    assign sunmi_order_variant = sunmi_offer_product.selected_or_first_available_variant
+    assign sunmi_order_initial_quantity = sunmi_order_variant.quantity_rule.min | default: 1
+
+    if sunmi_order_is_arabic
+      assign sunmi_order_eyebrow = 'إتمام طلبك'
+      assign sunmi_order_heading = 'بيانات الشحن وإكمال الطلب'
+      assign sunmi_order_description = 'أدخلي بيانات الشحن واختاري طريقة الدفع لإتمام طلبك.'
+      assign sunmi_first_name = 'الاسم الأول'
+      assign sunmi_last_name = 'اسم العائلة'
+      assign sunmi_phone = 'رقم الهاتف'
+      assign sunmi_email = 'البريد الإلكتروني'
+      assign sunmi_province = 'المحافظة'
+      assign sunmi_city = 'المدينة أو المنطقة'
+      assign sunmi_address1 = 'العنوان بالتفصيل'
+      assign sunmi_address2 = 'رقم المبنى، الدور أو الشقة'
+      assign sunmi_zip = 'الرمز البريدي (اختياري)'
+      assign sunmi_summary_heading = 'ملخص الطلب'
+      assign sunmi_quantity = 'الكمية'
+      assign sunmi_products_total = 'إجمالي المنتجات'
+      assign sunmi_checkout_note = 'يتم حساب الشحن والخصومات تلقائيًا قبل تأكيد الطلب.'
+      assign sunmi_submit = 'إكمال الشراء والدفع'
+      assign sunmi_processing = 'جارٍ تجهيز الطلب...'
+      assign sunmi_unavailable = 'هذا الخيار غير متوفر حاليًا.'
+      assign sunmi_form_error = 'تعذر تجهيز الطلب. راجعي البيانات وحاولي مرة أخرى.'
+      assign sunmi_payment_heading = 'طريقة الدفع'
+      assign sunmi_payment_secure = 'جميع المعاملات آمنة ومشفرة.'
+      assign sunmi_payment_online = 'الدفع أونلاين عبر Kashier'
+      assign sunmi_payment_online_note = 'Visa • Mastercard • المحافظ وخيارات الدفع المتاحة عبر Kashier'
+      assign sunmi_payment_cod = 'الدفع عند الاستلام'
+      assign sunmi_payment_cod_note = 'ادفعي قيمة الطلب عند استلام الشحنة.'
+      assign sunmi_pay_now = 'الدفع الآن'
+      assign sunmi_confirm_cod = 'تأكيد الطلب'
+      assign sunmi_shipping_heading = 'طريقة الشحن'
+      assign sunmi_shipping_hint = 'أكملي بيانات العنوان لحساب الشحن والخصومات تلقائيًا.'
+      assign sunmi_shipping_loading = 'جارٍ حساب الشحن...'
+      assign sunmi_shipping_error = 'تعذر حساب الشحن لهذا العنوان.'
+      assign sunmi_discount_label = 'الخصومات'
+      assign sunmi_shipping_label = 'الشحن'
+      assign sunmi_grand_total = 'الإجمالي النهائي'
+      assign sunmi_payment_verifying = 'جارٍ التحقق من الدفع...'
+      assign sunmi_order_success = 'تم استلام طلبك بنجاح'
+      assign sunmi_order_number = 'رقم الطلب'
+    else
+      assign sunmi_order_eyebrow = 'Complete your order'
+      assign sunmi_order_heading = 'Shipping details and checkout'
+      assign sunmi_order_description = 'Enter your shipping details and choose your payment method to complete your order.'
+      assign sunmi_first_name = 'First name'
+      assign sunmi_last_name = 'Last name'
+      assign sunmi_phone = 'Phone number'
+      assign sunmi_email = 'Email address'
+      assign sunmi_province = 'Governorate'
+      assign sunmi_city = 'City or area'
+      assign sunmi_address1 = 'Detailed address'
+      assign sunmi_address2 = 'Building, floor or apartment'
+      assign sunmi_zip = 'Postal code (optional)'
+      assign sunmi_summary_heading = 'Order summary'
+      assign sunmi_quantity = 'Quantity'
+      assign sunmi_products_total = 'Products total'
+      assign sunmi_checkout_note = 'Shipping and discounts are calculated automatically before order confirmation.'
+      assign sunmi_submit = 'Continue to payment'
+      assign sunmi_processing = 'Preparing checkout...'
+      assign sunmi_unavailable = 'This option is currently unavailable.'
+      assign sunmi_form_error = 'Checkout could not be prepared. Review your details and try again.'
+      assign sunmi_payment_heading = 'Payment method'
+      assign sunmi_payment_secure = 'All transactions are secure and encrypted.'
+      assign sunmi_payment_online = 'Pay online via Kashier'
+      assign sunmi_payment_online_note = 'Visa • Mastercard • wallets and payment options available through Kashier'
+      assign sunmi_payment_cod = 'Cash on delivery'
+      assign sunmi_payment_cod_note = 'Pay the order amount when your shipment arrives.'
+      assign sunmi_pay_now = 'Pay now'
+      assign sunmi_confirm_cod = 'Confirm order'
+      assign sunmi_shipping_heading = 'Shipping method'
+      assign sunmi_shipping_hint = 'Complete your address to calculate shipping and discounts automatically.'
+      assign sunmi_shipping_loading = 'Calculating shipping...'
+      assign sunmi_shipping_error = 'Shipping could not be calculated for this address.'
+      assign sunmi_discount_label = 'Discounts'
+      assign sunmi_shipping_label = 'Shipping'
+      assign sunmi_grand_total = 'Final total'
+      assign sunmi_payment_verifying = 'Verifying payment...'
+      assign sunmi_order_success = 'Your order has been received successfully'
+      assign sunmi_order_number = 'Order number'
+    endif
+  %}
+
+  <section
+    id="SunmiProductOrder-{{ section.id }}"
+    class="sunmi-product-order color-{{ section.settings.offer_form_color_scheme }}"
+    data-sunmi-product-order
+    data-default-variant-id="{{ sunmi_order_variant.id }}"
+    data-currency="{{ cart.currency.iso_code | default: shop.currency | escape }}"
+    data-locale="{% if sunmi_order_is_arabic %}ar-EG{% else %}en-EG{% endif %}"
+    data-language="{{ sunmi_order_language | escape }}"
+    data-api-version="2026-07"
+    data-submit-label="{{ sunmi_submit | escape }}"
+    data-processing-label="{{ sunmi_processing | escape }}"
+    data-unavailable-label="{{ sunmi_unavailable | escape }}"
+    data-error-label="{{ sunmi_form_error | escape }}"
+    data-pay-now-label="{{ sunmi_pay_now | escape }}"
+    data-confirm-cod-label="{{ sunmi_confirm_cod | escape }}"
+    data-shipping-loading="{{ sunmi_shipping_loading | escape }}"
+    data-shipping-error="{{ sunmi_shipping_error | escape }}"
+    data-verifying-label="{{ sunmi_payment_verifying | escape }}"
+    data-success-label="{{ sunmi_order_success | escape }}"
+    data-order-number-label="{{ sunmi_order_number | escape }}"
+    style="
+      --sunmi-order-padding-top: {{ section.settings.offer_form_padding_top }}px;
+      --sunmi-order-padding-bottom: {{ section.settings.offer_form_padding_bottom }}px;
+    "
+  >
+    <div class="sunmi-product-order__shell">
+      <form
+        id="SunmiProductOrderForm-{{ section.id }}"
+        class="sunmi-product-order__form"
+        data-sunmi-product-order-form
+        novalidate
+      >
+        <div class="sunmi-product-order__intro">
+          <p>{{ sunmi_order_eyebrow }}</p>
+          <h2>{{ sunmi_order_heading }}</h2>
+          <div>{{ sunmi_order_description }}</div>
+        </div>
+
+        <div class="sunmi-product-order__fields">
+          <label>
+            <span>{{ sunmi_first_name }}</span>
+            <input type="text" name="firstName" autocomplete="given-name" required>
+          </label>
+
+          <label>
+            <span>{{ sunmi_last_name }}</span>
+            <input type="text" name="lastName" autocomplete="family-name" required>
+          </label>
+
+          <label>
+            <span>{{ sunmi_phone }}</span>
+            <input
+              type="tel"
+              name="phone"
+              autocomplete="tel"
+              inputmode="tel"
+              placeholder="01XXXXXXXXX"
+              pattern="(?:\+20|0020|0)?1[0125][0-9]{8}"
+              required
+            >
+          </label>
+
+          <label>
+            <span>{{ sunmi_email }}</span>
+            <input type="email" name="email" autocomplete="email" required>
+          </label>
+
+          <label>
+            <span>{{ sunmi_province }}</span>
+            <select name="provinceCode" autocomplete="address-level1" required>
+              <option value="">—</option>
+              {% if sunmi_order_is_arabic %}
+                <option value="ALX">الإسكندرية</option>
+                <option value="ASN">أسوان</option>
+                <option value="AST">أسيوط</option>
+                <option value="BH">البحيرة</option>
+                <option value="BNS">بني سويف</option>
+                <option value="C">القاهرة</option>
+                <option value="DK">الدقهلية</option>
+                <option value="DT">دمياط</option>
+                <option value="FYM">الفيوم</option>
+                <option value="GH">الغربية</option>
+                <option value="GZ">الجيزة</option>
+                <option value="IS">الإسماعيلية</option>
+                <option value="KFS">كفر الشيخ</option>
+                <option value="KB">القليوبية</option>
+                <option value="KN">قنا</option>
+                <option value="LX">الأقصر</option>
+                <option value="MT">مطروح</option>
+                <option value="MN">المنيا</option>
+                <option value="MNF">المنوفية</option>
+                <option value="WAD">الوادي الجديد</option>
+                <option value="BA">البحر الأحمر</option>
+                <option value="SHR">الشرقية</option>
+                <option value="PTS">بورسعيد</option>
+                <option value="SIN">شمال سيناء</option>
+                <option value="JS">جنوب سيناء</option>
+                <option value="SUZ">السويس</option>
+                <option value="SHG">سوهاج</option>
+              {% else %}
+                <option value="ALX">Alexandria</option>
+                <option value="ASN">Aswan</option>
+                <option value="AST">Assiut</option>
+                <option value="BH">Beheira</option>
+                <option value="BNS">Beni Suef</option>
+                <option value="C">Cairo</option>
+                <option value="DK">Dakahlia</option>
+                <option value="DT">Damietta</option>
+                <option value="FYM">Fayoum</option>
+                <option value="GH">Gharbia</option>
+                <option value="GZ">Giza</option>
+                <option value="IS">Ismailia</option>
+                <option value="KFS">Kafr El Sheikh</option>
+                <option value="KB">Qalyubia</option>
+                <option value="KN">Qena</option>
+                <option value="LX">Luxor</option>
+                <option value="MT">Matrouh</option>
+                <option value="MN">Minya</option>
+                <option value="MNF">Monufia</option>
+                <option value="WAD">New Valley</option>
+                <option value="BA">Red Sea</option>
+                <option value="SHR">Sharqia</option>
+                <option value="PTS">Port Said</option>
+                <option value="SIN">North Sinai</option>
+                <option value="JS">South Sinai</option>
+                <option value="SUZ">Suez</option>
+                <option value="SHG">Sohag</option>
+              {% endif %}
+            </select>
+          </label>
+
+          <label>
+            <span>{{ sunmi_city }}</span>
+            <input type="text" name="city" autocomplete="address-level2" required>
+          </label>
+
+          <label class="sunmi-product-order__wide">
+            <span>{{ sunmi_address1 }}</span>
+            <input type="text" name="address1" autocomplete="address-line1" required>
+          </label>
+
+          <label>
+            <span>{{ sunmi_address2 }}</span>
+            <input type="text" name="address2" autocomplete="address-line2">
+          </label>
+
+          <label>
+            <span>{{ sunmi_zip }}</span>
+            <input type="text" name="zip" autocomplete="postal-code" inputmode="numeric">
+          </label>
+        </div>
+
+
+        <div class="sunmi-product-order__shipping" data-sunmi-shipping>
+          <div class="sunmi-product-order__payment-head">
+            <h3>{{ sunmi_shipping_heading }}</h3>
+            <p data-sunmi-shipping-status>{{ sunmi_shipping_hint }}</p>
+          </div>
+          <div class="sunmi-product-order__shipping-options" data-sunmi-shipping-options></div>
+        </div>
+
+        <div class="sunmi-product-order__payment" data-sunmi-payment-methods>
+          <div class="sunmi-product-order__payment-head">
+            <h3>{{ sunmi_payment_heading }}</h3>
+            <p>{{ sunmi_payment_secure }}</p>
+          </div>
+
+          <label class="sunmi-product-order__payment-option is-selected" data-sunmi-payment-option>
+            <input type="radio" name="paymentMethod" value="kashier" checked>
+            <span class="sunmi-product-order__payment-radio" aria-hidden="true"></span>
+            <span class="sunmi-product-order__payment-copy">
+              <strong>{{ sunmi_payment_online }}</strong>
+              <small>{{ sunmi_payment_online_note }}</small>
+            </span>
+            <span class="sunmi-product-order__payment-badges" aria-hidden="true">
+              <b>VISA</b><b>MC</b><b>Wallet</b>
+            </span>
+          </label>
+
+          <label class="sunmi-product-order__payment-option" data-sunmi-payment-option>
+            <input type="radio" name="paymentMethod" value="cod">
+            <span class="sunmi-product-order__payment-radio" aria-hidden="true"></span>
+            <span class="sunmi-product-order__payment-copy">
+              <strong>{{ sunmi_payment_cod }}</strong>
+              <small>{{ sunmi_payment_cod_note }}</small>
+            </span>
+          </label>
+        </div>
+
+        <p
+          class="sunmi-product-order__error"
+          data-sunmi-order-error
+          role="alert"
+          hidden
+        ></p>
+      </form>
+
+      <aside class="sunmi-product-order__summary">
+        <h3>{{ sunmi_summary_heading }}</h3>
+
+        <div class="sunmi-product-order__product">
+          <strong>{{ sunmi_offer_product.title }}</strong>
+          <span
+            data-sunmi-variant-title
+            {% if sunmi_order_variant.title == 'Default Title' %}hidden{% endif %}
+          >
+            {{ sunmi_order_variant.title }}
+          </span>
+        </div>
+
+        <div class="sunmi-product-order__quantity-row">
+          <span>{{ sunmi_quantity }}</span>
+
+          <div class="sunmi-product-order__quantity">
+            <button type="button" data-sunmi-quantity-minus aria-label="-">−</button>
+            <input
+              type="number"
+              value="{{ sunmi_order_initial_quantity }}"
+              min="{{ sunmi_order_variant.quantity_rule.min | default: 1 }}"
+              max="99"
+              inputmode="numeric"
+              data-sunmi-quantity-input
+            >
+            <button type="button" data-sunmi-quantity-plus aria-label="+">+</button>
+          </div>
+        </div>
+
+        <div class="sunmi-product-order__summary-lines">
+          <div>
+            <span>{{ sunmi_products_total }}</span>
+            <strong data-sunmi-order-subtotal>
+              {{ sunmi_order_variant.price | times: sunmi_order_initial_quantity | money }}
+            </strong>
+          </div>
+          <div data-sunmi-discount-row hidden>
+            <span>{{ sunmi_discount_label }}</span>
+            <strong data-sunmi-order-discount>—</strong>
+          </div>
+          <div>
+            <span>{{ sunmi_shipping_label }}</span>
+            <strong data-sunmi-order-shipping>—</strong>
+          </div>
+        </div>
+
+        <div class="sunmi-product-order__total">
+          <span>{{ sunmi_grand_total }}</span>
+          <strong data-sunmi-order-total>
+            {{ sunmi_order_variant.price | times: sunmi_order_initial_quantity | money }}
+          </strong>
+        </div>
+
+        <p class="sunmi-product-order__note">{{ sunmi_checkout_note }}</p>
+
+        <button
+          type="submit"
+          form="SunmiProductOrderForm-{{ section.id }}"
+          class="sunmi-product-order__submit"
+          data-sunmi-order-submit
+          {% unless sunmi_order_variant.available %}disabled{% endunless %}
+        >
+          {% if sunmi_order_variant.available %}
+            {{ sunmi_submit }}
+          {% else %}
+            {{ sunmi_unavailable }}
+          {% endif %}
+        </button>
+      </aside>
+    </div>
+
+
+    <div class="sunmi-pay-modal" data-sunmi-pay-modal hidden>
+      <div class="sunmi-pay-modal__backdrop" data-sunmi-pay-close></div>
+      <div class="sunmi-pay-modal__dialog" role="dialog" aria-modal="true" aria-label="{{ sunmi_payment_heading }}">
+        <button class="sunmi-pay-modal__close" type="button" data-sunmi-pay-close aria-label="Close">×</button>
+        <div class="sunmi-pay-modal__status" data-sunmi-pay-status hidden></div>
+        <iframe
+          class="sunmi-pay-modal__iframe"
+          data-sunmi-pay-iframe
+          title="{{ sunmi_payment_heading }}"
+          allow="payment *"
+        ></iframe>
+      </div>
+    </div>
+
+    <script type="application/json" data-sunmi-product-variants>
+      [
+        {% for variant in sunmi_offer_product.variants %}
+          {
+            "id": {{ variant.id | json }},
+            "title": {{ variant.title | json }},
+            "price": {{ variant.price | json }},
+            "available": {{ variant.available | json }},
+            "minimum": {{ variant.quantity_rule.min | default: 1 | json }}
+          }{% unless forloop.last %},{% endunless %}
+        {% endfor %}
+      ]
+    </script>
+
+    <script>
+      (() => {
+        const root = document.getElementById('SunmiProductOrder-{{ section.id }}');
+        if (!root || root.dataset.sunmiReady === 'true') return;
+        root.dataset.sunmiReady = 'true';
+
+        const productPageRoot = document;
+        const form = root.querySelector('[data-sunmi-product-order-form]');
+        const errorBox = root.querySelector('[data-sunmi-order-error]');
+        const submitButton = root.querySelector('[data-sunmi-order-submit]');
+        const quantityInput = root.querySelector('[data-sunmi-quantity-input]');
+        const minusButton = root.querySelector('[data-sunmi-quantity-minus]');
+        const plusButton = root.querySelector('[data-sunmi-quantity-plus]');
+        const totalElement = root.querySelector('[data-sunmi-order-total]');
+        const subtotalElement = root.querySelector('[data-sunmi-order-subtotal]');
+        const shippingElement = root.querySelector('[data-sunmi-order-shipping]');
+        const discountElement = root.querySelector('[data-sunmi-order-discount]');
+        const discountRow = root.querySelector('[data-sunmi-discount-row]');
+        const variantTitleElement = root.querySelector('[data-sunmi-variant-title]');
+        const variantsScript = root.querySelector('[data-sunmi-product-variants]');
+        const paymentInputs = [...root.querySelectorAll('input[name="paymentMethod"]')];
+        const paymentOptions = [...root.querySelectorAll('[data-sunmi-payment-option]')];
+        const shippingStatus = root.querySelector('[data-sunmi-shipping-status]');
+        const shippingOptions = root.querySelector('[data-sunmi-shipping-options]');
+        const modal = root.querySelector('[data-sunmi-pay-modal]');
+        const payIframe = root.querySelector('[data-sunmi-pay-iframe]');
+        const payStatus = root.querySelector('[data-sunmi-pay-status]');
+        const modalCloseButtons = [...root.querySelectorAll('[data-sunmi-pay-close]')];
+
+        let variants = [];
+        let selectedShippingHandle = '';
+        let currentQuote = null;
+        let quoteTimer = null;
+        let paymentReturnOrigin = '';
+        let activeOrderRef = '';
+
+        try {
+          variants = JSON.parse(variantsScript?.textContent || '[]');
+        } catch (error) {
+          console.error('[Sun-Mi product order] Invalid variants JSON', error);
+        }
+
+        const variantMap = new Map(
+          variants.map((variant) => [String(variant.id), variant])
+        );
+
+        let currentVariant =
+          variantMap.get(String(root.dataset.defaultVariantId)) ||
+          variants[0] ||
+          null;
+
+        const currency = root.dataset.currency || 'EGP';
+        const locale = root.dataset.locale || 'ar-EG';
+        const language = root.dataset.language || 'ar';
+
+        const moneyFormatter = new Intl.NumberFormat(locale, {
+          style: 'currency',
+          currency
+        });
+
+        const formatMoneyAmount = (amount, currencyCode = currency) => {
+          try {
+            return new Intl.NumberFormat(locale, {
+              style: 'currency',
+              currency: currencyCode || currency
+            }).format(Number(amount || 0));
+          } catch (_) {
+            return `${Number(amount || 0).toFixed(2)} ${currencyCode || currency}`;
+          }
+        };
+
+        const formatMoneyCents = (cents) =>
+          moneyFormatter.format(Number(cents || 0) / 100);
+
+        const getPaymentMethod = () =>
+          paymentInputs.find((input) => input.checked)?.value || 'kashier';
+
+        const normalizeEgyptPhone = (value) => {
+          let digits = String(value || '').replace(/\D/g, '');
+          if (digits.startsWith('0020')) digits = digits.slice(2);
+          if (digits.startsWith('20')) return `+${digits}`;
+          if (digits.startsWith('0')) return `+20${digits.slice(1)}`;
+          return `+20${digits}`;
+        };
+
+        const setError = (message = '') => {
+          if (!errorBox) return;
+          errorBox.textContent = message;
+          errorBox.hidden = !message;
+          if (message) {
+            errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        };
+
+        const getVariantIdFromProductPage = () => {
+          const stickyVariantId = productPageRoot
+            .querySelector('sticky-add-to-cart[data-current-variant-id]')
+            ?.getAttribute('data-current-variant-id');
+
+          if (stickyVariantId && variantMap.has(String(stickyVariantId))) {
+            return String(stickyVariantId);
+          }
+
+          const formInputs = [
+            ...productPageRoot.querySelectorAll(
+              'form[action*="/cart/add"] input[name="id"]'
+            )
+          ];
+          const matchingInput = formInputs.find((input) =>
+            variantMap.has(String(input.value))
+          );
+          if (matchingInput) return String(matchingInput.value);
+
+          const urlVariant = new URL(window.location.href).searchParams.get('variant');
+          if (urlVariant && variantMap.has(String(urlVariant))) {
+            return String(urlVariant);
+          }
+
+          return String(currentVariant?.id || '');
+        };
+
+        const getCustomerPayload = () => {
+          const formData = new FormData(form);
+          return {
+            firstName: String(formData.get('firstName') || '').trim(),
+            lastName: String(formData.get('lastName') || '').trim(),
+            phone: normalizeEgyptPhone(formData.get('phone')),
+            email: String(formData.get('email') || '').trim(),
+            provinceCode: String(formData.get('provinceCode') || '').trim(),
+            city: String(formData.get('city') || '').trim(),
+            address1: String(formData.get('address1') || '').trim(),
+            address2: String(formData.get('address2') || '').trim(),
+            zip: String(formData.get('zip') || '').trim()
+          };
+        };
+
+        const getRequestPayload = () => ({
+          variantId: String(currentVariant?.id || ''),
+          quantity: Math.max(
+            Number(currentVariant?.minimum || 1),
+            Number(quantityInput?.value || 1)
+          ),
+          customer: getCustomerPayload(),
+          paymentMethod: getPaymentMethod(),
+          shippingHandle: selectedShippingHandle,
+          language
+        });
+
+        const hasAddressForQuote = () => {
+          const c = getCustomerPayload();
+          return Boolean(
+            currentVariant?.id &&
+            c.firstName &&
+            c.lastName &&
+            c.phone &&
+            c.email &&
+            c.provinceCode &&
+            c.city &&
+            c.address1
+          );
+        };
+
+        const renderPaymentMethod = () => {
+          const selectedMethod = getPaymentMethod();
+          paymentOptions.forEach((option) => {
+            const input = option.querySelector('input[name="paymentMethod"]');
+            option.classList.toggle('is-selected', Boolean(input?.checked));
+          });
+
+          if (submitButton && currentVariant?.available) {
+            submitButton.textContent =
+              selectedMethod === 'cod'
+                ? root.dataset.confirmCodLabel
+                : root.dataset.payNowLabel;
+          }
+        };
+
+        const renderClientSubtotal = () => {
+          if (!currentVariant) return;
+          const quantity = Math.max(
+            Number(currentVariant.minimum || 1),
+            Number(quantityInput?.value || 1)
+          );
+
+          if (subtotalElement) {
+            subtotalElement.textContent = formatMoneyCents(
+              Number(currentVariant.price || 0) * quantity
+            );
+          }
+
+          if (!currentQuote && totalElement) {
+            totalElement.textContent = formatMoneyCents(
+              Number(currentVariant.price || 0) * quantity
+            );
+          }
+        };
+
+        const renderQuote = (quote) => {
+          currentQuote = quote;
+
+          const totals = quote?.totals || {};
+          if (subtotalElement && totals.subtotal) {
+            subtotalElement.textContent = formatMoneyAmount(
+              totals.subtotal.amount,
+              totals.subtotal.currencyCode
+            );
+          }
+
+          const discount = Number(totals?.discounts?.amount || 0);
+          if (discountRow) discountRow.hidden = !(discount > 0);
+          if (discountElement && totals.discounts) {
+            discountElement.textContent = `− ${formatMoneyAmount(
+              totals.discounts.amount,
+              totals.discounts.currencyCode
+            )}`;
+          }
+
+          if (shippingElement && totals.shipping) {
+            shippingElement.textContent = formatMoneyAmount(
+              totals.shipping.amount,
+              totals.shipping.currencyCode
+            );
+          }
+
+          if (totalElement && totals.total) {
+            totalElement.textContent = formatMoneyAmount(
+              totals.total.amount,
+              totals.total.currencyCode
+            );
+          }
+        };
+
+        const renderShippingRates = (rates = []) => {
+          if (!shippingOptions) return;
+          shippingOptions.innerHTML = '';
+
+          if (!rates.length) {
+            selectedShippingHandle = '';
+            return;
+          }
+
+          rates.forEach((rate, index) => {
+            const label = document.createElement('label');
+            label.className = 'sunmi-product-order__payment-option sunmi-product-order__shipping-option';
+
+            const input = document.createElement('input');
+            input.type = 'radio';
+            input.name = 'shippingMethod';
+            input.value = rate.handle;
+            input.checked =
+              rate.handle === selectedShippingHandle ||
+              (!selectedShippingHandle && index === 0);
+
+            if (input.checked) {
+              selectedShippingHandle = rate.handle;
+              label.classList.add('is-selected');
+            }
+
+            const radio = document.createElement('span');
+            radio.className = 'sunmi-product-order__payment-radio';
+
+            const copy = document.createElement('span');
+            copy.className = 'sunmi-product-order__payment-copy';
+            const strong = document.createElement('strong');
+            strong.textContent = rate.title || 'Shipping';
+            copy.appendChild(strong);
+
+            const price = document.createElement('b');
+            price.className = 'sunmi-product-order__shipping-price';
+            price.textContent = formatMoneyAmount(rate.amount, rate.currency);
+
+            label.append(input, radio, copy, price);
+            shippingOptions.appendChild(label);
+
+            input.addEventListener('change', () => {
+              selectedShippingHandle = input.value;
+              [...shippingOptions.querySelectorAll('.sunmi-product-order__shipping-option')]
+                .forEach((item) => item.classList.toggle(
+                  'is-selected',
+                  item.querySelector('input')?.checked
+                ));
+              quoteOrder(true);
+            });
+          });
+        };
+
+        const quoteOrder = async (force = false) => {
+          if (!hasAddressForQuote()) {
+            currentQuote = null;
+            if (shippingStatus) {
+              shippingStatus.textContent = '{{ sunmi_shipping_hint | escape }}';
+            }
+            return null;
+          }
+
+          if (shippingStatus) {
+            shippingStatus.textContent = root.dataset.shippingLoading;
+          }
+
+          try {
+            const response = await fetch('/apps/sunmi-pay/quote', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json'
+              },
+              body: JSON.stringify(getRequestPayload())
+            });
+
+            const data = await response.json();
+            if (!response.ok || !data?.success) {
+              throw new Error(data?.error || root.dataset.shippingError);
+            }
+
+            if (
+              force ||
+              !shippingOptions?.children.length ||
+              !data.shippingRates?.some((rate) => rate.handle === selectedShippingHandle)
+            ) {
+              selectedShippingHandle =
+                data.selectedShippingHandle ||
+                data.shippingRates?.[0]?.handle ||
+                '';
+              renderShippingRates(data.shippingRates || []);
+            }
+
+            renderQuote(data);
+            if (shippingStatus) {
+              shippingStatus.textContent = data.shippingRates?.length
+                ? ''
+                : '{{ sunmi_shipping_heading | escape }}';
+            }
+            return data;
+          } catch (error) {
+            console.error('[Sun-Mi quote]', error);
+            if (shippingStatus) {
+              shippingStatus.textContent = error?.message || root.dataset.shippingError;
+            }
+            currentQuote = null;
+            return null;
+          }
+        };
+
+        const scheduleQuote = () => {
+          window.clearTimeout(quoteTimer);
+          quoteTimer = window.setTimeout(() => quoteOrder(false), 450);
+        };
+
+        const renderOrderSummary = () => {
+          if (!currentVariant) return;
+
+          const minimum = Math.max(1, Number(currentVariant.minimum || 1));
+          const quantity = Math.max(
+            minimum,
+            Number(quantityInput?.value || minimum)
+          );
+
+          if (quantityInput) {
+            quantityInput.min = String(minimum);
+            quantityInput.value = String(quantity);
+          }
+
+          if (variantTitleElement) {
+            const hasTitle =
+              currentVariant.title &&
+              currentVariant.title !== 'Default Title';
+            variantTitleElement.textContent = hasTitle ? currentVariant.title : '';
+            variantTitleElement.hidden = !hasTitle;
+          }
+
+          renderClientSubtotal();
+
+          if (submitButton) {
+            submitButton.disabled = !currentVariant.available;
+            submitButton.textContent = currentVariant.available
+              ? (getPaymentMethod() === 'cod'
+                  ? root.dataset.confirmCodLabel
+                  : root.dataset.payNowLabel)
+              : root.dataset.unavailableLabel;
+          }
+        };
+
+        const syncVariantFromProductPage = () => {
+          const variantId = getVariantIdFromProductPage();
+          const nextVariant = variantMap.get(String(variantId));
+          if (!nextVariant || String(currentVariant?.id) === String(nextVariant.id)) return;
+
+          currentVariant = nextVariant;
+          currentQuote = null;
+          selectedShippingHandle = '';
+          if (shippingOptions) shippingOptions.innerHTML = '';
+          renderOrderSummary();
+          scheduleQuote();
+        };
+
+        const setProcessing = (processing) => {
+          if (!submitButton) return;
+          submitButton.disabled = processing || !currentVariant?.available;
+          submitButton.textContent = processing
+            ? root.dataset.processingLabel
+            : (getPaymentMethod() === 'cod'
+                ? root.dataset.confirmCodLabel
+                : root.dataset.payNowLabel);
+        };
+
+        const openModal = (sessionUrl) => {
+          if (!modal || !payIframe) return;
+          payStatus.hidden = true;
+          payStatus.textContent = '';
+          payIframe.hidden = false;
+          payIframe.src = sessionUrl;
+          modal.hidden = false;
+          document.documentElement.classList.add('sunmi-pay-open');
+        };
+
+        const closeModal = () => {
+          if (!modal || !payIframe) return;
+          modal.hidden = true;
+          payIframe.src = 'about:blank';
+          document.documentElement.classList.remove('sunmi-pay-open');
+        };
+
+        const showSuccess = (orderName) => {
+          closeModal();
+          form.innerHTML = `
+            <div class="sunmi-product-order__success">
+              <div class="sunmi-product-order__success-icon">✓</div>
+              <h3>${root.dataset.successLabel}</h3>
+              ${orderName ? `<p>${root.dataset.orderNumberLabel}: <strong>${orderName}</strong></p>` : ''}
+            </div>
+          `;
+          if (submitButton) submitButton.hidden = true;
+          setError('');
+          root.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        };
+
+        const pollPaymentStatus = async () => {
+          if (!activeOrderRef) return;
+
+          if (payStatus) {
+            payStatus.hidden = false;
+            payStatus.textContent = root.dataset.verifyingLabel;
+          }
+
+          for (let attempt = 0; attempt < 30; attempt += 1) {
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+
+            try {
+              const response = await fetch(
+                `/apps/sunmi-pay/status?ref=${encodeURIComponent(activeOrderRef)}`,
+                { headers: { Accept: 'application/json' } }
+              );
+              const data = await response.json();
+
+              if (data?.success && data?.completed) {
+                showSuccess(data.orderName);
+                return;
+              }
+            } catch (_) {}
+          }
+
+          if (payStatus) {
+            payStatus.hidden = false;
+            payStatus.textContent = root.dataset.verifyingLabel;
+          }
+        };
+
+        minusButton?.addEventListener('click', () => {
+          const minimum = Math.max(1, Number(quantityInput?.min || 1));
+          quantityInput.value = String(Math.max(
+            minimum,
+            Number(quantityInput?.value || minimum) - 1
+          ));
+          currentQuote = null;
+          renderOrderSummary();
+          scheduleQuote();
+        });
+
+        plusButton?.addEventListener('click', () => {
+          quantityInput.value = String(Math.min(
+            99,
+            Number(quantityInput?.value || 1) + 1
+          ));
+          currentQuote = null;
+          renderOrderSummary();
+          scheduleQuote();
+        });
+
+        quantityInput?.addEventListener('input', () => {
+          const minimum = Math.max(1, Number(quantityInput.min || 1));
+          quantityInput.value = String(Math.min(
+            99,
+            Math.max(minimum, Number(quantityInput.value || minimum))
+          ));
+          currentQuote = null;
+          renderOrderSummary();
+          scheduleQuote();
+        });
+
+        paymentInputs.forEach((input) => {
+          input.addEventListener('change', renderPaymentMethod);
+        });
+
+        [...form.querySelectorAll('input, select')].forEach((field) => {
+          if (field.name === 'paymentMethod') return;
+          field.addEventListener('change', scheduleQuote);
+          field.addEventListener('blur', scheduleQuote);
+        });
+
+        productPageRoot.addEventListener('change', () => {
+          [0, 80, 250].forEach((delay) => {
+            window.setTimeout(syncVariantFromProductPage, delay);
+          });
+        });
+
+        [
+          'variant:update',
+          'variant:change',
+          'product:variant-change',
+          'product:variant-changed'
+        ].forEach((eventName) => {
+          productPageRoot.addEventListener(eventName, () => {
+            [0, 80].forEach((delay) => {
+              window.setTimeout(syncVariantFromProductPage, delay);
+            });
+          });
+        });
+
+        const stickyElement = productPageRoot.querySelector('sticky-add-to-cart');
+        if (stickyElement) {
+          new MutationObserver(syncVariantFromProductPage).observe(
+            stickyElement,
+            {
+              attributes: true,
+              attributeFilter: ['data-current-variant-id']
+            }
+          );
+        }
+
+        const syncInterval = window.setInterval(syncVariantFromProductPage, 600);
+        window.addEventListener(
+          'pagehide',
+          () => window.clearInterval(syncInterval),
+          { once: true }
+        );
+
+        modalCloseButtons.forEach((button) => {
+          button.addEventListener('click', closeModal);
+        });
+
+        window.addEventListener('message', (event) => {
+          if (!paymentReturnOrigin || event.origin !== paymentReturnOrigin) return;
+          if (event.data?.type !== 'SUNMI_KASHIER_RETURN') return;
+          if (event.data?.ref && activeOrderRef && event.data.ref !== activeOrderRef) return;
+          pollPaymentStatus();
+        });
+
+        const createOrder = async () => {
+          setError('');
+          syncVariantFromProductPage();
+
+          if (!currentVariant?.available) {
+            setError(root.dataset.unavailableLabel);
+            return;
+          }
+
+          if (!form.reportValidity()) return;
+
+          setProcessing(true);
+
+          try {
+            const quote = await quoteOrder(true);
+            if (!quote) {
+              throw new Error(root.dataset.shippingError);
+            }
+
+            const response = await fetch('/apps/sunmi-pay/create', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json'
+              },
+              body: JSON.stringify(getRequestPayload())
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data?.success) {
+              throw new Error(data?.error || root.dataset.errorLabel);
+            }
+
+            if (data.mode === 'cod') {
+              showSuccess(data.orderName);
+              return;
+            }
+
+            if (!data.sessionUrl || !data.orderRef) {
+              throw new Error(root.dataset.errorLabel);
+            }
+
+            activeOrderRef = data.orderRef;
+            paymentReturnOrigin = data.returnOrigin || '';
+            openModal(data.sessionUrl);
+          } catch (error) {
+            console.error('[Sun-Mi product order]', error);
+            setError(error?.message || root.dataset.errorLabel);
+          } finally {
+            setProcessing(false);
+          }
+        };
+
+        form.addEventListener('submit', (event) => {
+          event.preventDefault();
+          createOrder();
+        });
+
+        syncVariantFromProductPage();
+        renderOrderSummary();
+        renderPaymentMethod();
+      })();
+    </script>
+  </section>
+{% endif %}
+
+{% stylesheet %}
+  /* SUN-MI product offer order form */
+  .sunmi-product-order,
+  .sunmi-product-order * {
+    box-sizing: border-box;
+  }
+
+  .sunmi-product-order {
+    --sunmi-order-purple: #6a36be;
+    --sunmi-order-purple-dark: #4f2696;
+    --sunmi-order-purple-soft: #f4effd;
+    --sunmi-order-text: #21172f;
+    --sunmi-order-muted: #746b80;
+    --sunmi-order-border: #e8e0f2;
+    width: 100%;
+    max-width: 100%;
+    padding:
+      var(--sunmi-order-padding-top)
+      16px
+      var(--sunmi-order-padding-bottom);
+    background:
+      radial-gradient(
+        circle at 90% 0%,
+        rgb(106 54 190 / 0.13),
+        transparent 34%
+      ),
+      linear-gradient(180deg, #fbf9ff 0%, #ffffff 100%) !important;
+    color: var(--sunmi-order-text) !important;
+    overflow-x: clip;
+  }
+
+  .sunmi-product-order__shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr);
+    gap: clamp(24px, 4vw, 52px);
+    width: min(1180px, 100%);
+    max-width: 100%;
+    min-width: 0;
+    margin-inline: auto;
+    padding: clamp(20px, 3vw, 40px);
+    border: 1px solid var(--sunmi-order-border);
+    border-radius: 26px;
+    background: #ffffff !important;
+    color: var(--sunmi-order-text) !important;
+    box-shadow: 0 28px 80px rgb(57 25 109 / 0.12);
+  }
+
+  .sunmi-product-order__form,
+  .sunmi-product-order__summary {
+    min-width: 0;
+    color: var(--sunmi-order-text) !important;
+  }
+
+  .sunmi-product-order__intro p {
+    margin: 0 0 8px;
+    color: var(--sunmi-order-purple) !important;
+    font-size: 0.84rem;
+    font-weight: 850;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .sunmi-product-order__intro h2 {
+    margin: 0;
+    color: var(--sunmi-order-text) !important;
+    font-size: clamp(1.7rem, 3vw, 2.7rem);
+    line-height: 1.2;
+  }
+
+  .sunmi-product-order__intro div {
+    margin-top: 12px;
+    color: var(--sunmi-order-muted) !important;
+    line-height: 1.8;
+  }
+
+  .sunmi-product-order__fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 26px;
+  }
+
+  .sunmi-product-order__fields label {
+    display: grid;
+    gap: 7px;
+    min-width: 0;
+    margin: 0;
+    color: var(--sunmi-order-text) !important;
+    font-size: 0.9rem;
+    font-weight: 750;
+  }
+
+  .sunmi-product-order__fields input,
+  .sunmi-product-order__fields select {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    padding: 11px 13px;
+    border: 1px solid var(--sunmi-order-border);
+    border-radius: 12px;
+    background: #ffffff !important;
+    color: var(--sunmi-order-text) !important;
+    opacity: 1;
+    font: inherit;
+    -webkit-text-fill-color: var(--sunmi-order-text);
+  }
+
+  .sunmi-product-order__fields input::placeholder {
+    color: #9a92a4;
+    opacity: 1;
+  }
+
+  .sunmi-product-order__fields input:focus,
+  .sunmi-product-order__fields select:focus {
+    border-color: var(--sunmi-order-purple);
+    outline: 3px solid rgb(106 54 190 / 0.12);
+  }
+
+  .sunmi-product-order__wide {
+    grid-column: 1 / -1;
+  }
+
+  .sunmi-product-order__payment {
+    margin-top: 24px;
+    padding-top: 22px;
+    border-top: 1px solid var(--sunmi-order-border);
+  }
+
+  .sunmi-product-order__payment-head {
+    display: flex;
+    gap: 12px;
+    align-items: end;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .sunmi-product-order__payment-head h3 {
+    margin: 0;
+    color: var(--sunmi-order-text) !important;
+    font-size: 1.2rem;
+  }
+
+  .sunmi-product-order__payment-head p {
+    margin: 0;
+    color: var(--sunmi-order-muted) !important;
+    font-size: 0.8rem;
+  }
+
+  .sunmi-product-order__payment-option {
+    position: relative;
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    width: 100%;
+    margin: 0 0 10px;
+    padding: 15px 16px;
+    border: 1px solid var(--sunmi-order-border);
+    border-radius: 14px;
+    background: #ffffff !important;
+    color: var(--sunmi-order-text) !important;
+    cursor: pointer;
+    transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+  }
+
+  .sunmi-product-order__payment-option.is-selected {
+    border-color: var(--sunmi-order-purple);
+    background: #faf7ff !important;
+    box-shadow: 0 0 0 3px rgb(106 54 190 / 0.08);
+  }
+
+  .sunmi-product-order__payment-option > input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .sunmi-product-order__payment-radio {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #c8bdd7;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: inset 0 0 0 4px #ffffff;
+  }
+
+  .sunmi-product-order__payment-option.is-selected .sunmi-product-order__payment-radio {
+    border-color: var(--sunmi-order-purple);
+    background: var(--sunmi-order-purple);
+  }
+
+  .sunmi-product-order__payment-copy {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .sunmi-product-order__payment-copy strong {
+    color: var(--sunmi-order-text) !important;
+    font-size: 0.95rem;
+  }
+
+  .sunmi-product-order__payment-copy small {
+    color: var(--sunmi-order-muted) !important;
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+
+  .sunmi-product-order__payment-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    justify-content: end;
+  }
+
+  .sunmi-product-order__payment-badges b {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 3px 7px;
+    border: 1px solid #ddd5e8;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #3a2b4d !important;
+    font-size: 0.68rem;
+    font-weight: 850;
+  }
+
+  .sunmi-product-order__error {
+    margin: 16px 0 0;
+    padding: 12px 14px;
+    border: 1px solid #f3c7c7;
+    border-radius: 10px;
+    background: #fff1f1 !important;
+    color: #a41414 !important;
+    font-weight: 700;
+  }
+
+  .sunmi-product-order__summary {
+    position: sticky;
+    top: 24px;
+    align-self: start;
+    padding: 22px;
+    border: 1px solid #e6daf7;
+    border-radius: 20px;
+    background: var(--sunmi-order-purple-soft) !important;
+  }
+
+  .sunmi-product-order__summary h3 {
+    margin: 0 0 18px;
+    color: var(--sunmi-order-text) !important;
+    font-size: 1.25rem;
+  }
+
+  .sunmi-product-order__product {
+    display: grid;
+    gap: 5px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #ddcfef;
+  }
+
+  .sunmi-product-order__product strong {
+    color: var(--sunmi-order-text) !important;
+    overflow-wrap: anywhere;
+  }
+
+  .sunmi-product-order__product span {
+    color: var(--sunmi-order-muted) !important;
+    font-size: 0.88rem;
+  }
+
+  .sunmi-product-order__quantity-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 18px;
+    color: var(--sunmi-order-text);
+  }
+
+  .sunmi-product-order__quantity {
+    display: grid;
+    grid-template-columns: 40px minmax(48px, 66px) 40px;
+    overflow: hidden;
+    border: 1px solid #d8c9ed;
+    border-radius: 10px;
+    background: #ffffff;
+  }
+
+  .sunmi-product-order__quantity button,
+  .sunmi-product-order__quantity input {
+    min-height: 40px;
+    border: 0;
+    background: #ffffff !important;
+    color: var(--sunmi-order-text) !important;
+    text-align: center;
+    font: inherit;
+  }
+
+  .sunmi-product-order__quantity button {
+    cursor: pointer;
+    font-size: 1.15rem;
+  }
+
+  .sunmi-product-order__quantity button:hover {
+    background: #eee5fa !important;
+    color: var(--sunmi-order-purple) !important;
+  }
+
+  .sunmi-product-order__quantity input {
+    width: 100%;
+    border-inline: 1px solid #d8c9ed;
+    appearance: textfield;
+  }
+
+  .sunmi-product-order__quantity input::-webkit-inner-spin-button,
+  .sunmi-product-order__quantity input::-webkit-outer-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+
+  .sunmi-product-order__total {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 2px solid #d8c5f1;
+    color: var(--sunmi-order-text);
+    font-size: 1.05rem;
+  }
+
+  .sunmi-product-order__total strong {
+    color: var(--sunmi-order-purple) !important;
+    font-size: 1.25rem;
+  }
+
+  .sunmi-product-order__note {
+    margin: 12px 0 0;
+    color: var(--sunmi-order-muted) !important;
+    font-size: 0.82rem;
+    line-height: 1.6;
+  }
+
+  .sunmi-product-order__submit {
+    display: block;
+    width: 100%;
+    min-height: 56px;
+    margin-top: 20px;
+    padding: 14px 20px;
+    border: 0;
+    border-radius: 14px;
+    background:
+      linear-gradient(
+        135deg,
+        var(--sunmi-order-purple),
+        var(--sunmi-order-purple-dark)
+      ) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff;
+    font: inherit;
+    font-weight: 850;
+    cursor: pointer;
+    box-shadow: 0 12px 30px rgb(106 54 190 / 0.25);
+    transition:
+      transform 180ms ease,
+      box-shadow 180ms ease;
+  }
+
+  .sunmi-product-order__submit:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 16px 34px rgb(106 54 190 / 0.3);
+  }
+
+  .sunmi-product-order__submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+
+  .sunmi-product-order__shipping {
+    margin-top: 24px;
+    padding-top: 22px;
+    border-top: 1px solid var(--sunmi-order-border);
+  }
+
+  .sunmi-product-order__shipping-options:empty {
+    display: none;
+  }
+
+  .sunmi-product-order__shipping-price {
+    color: var(--sunmi-order-purple) !important;
+    white-space: nowrap;
+  }
+
+  .sunmi-product-order__summary-lines {
+    display: grid;
+    gap: 10px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid #ddcfef;
+  }
+
+  .sunmi-product-order__summary-lines > div {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .sunmi-product-order__summary-lines strong {
+    color: var(--sunmi-order-text) !important;
+  }
+
+  .sunmi-pay-modal[hidden] {
+    display: none !important;
+  }
+
+  .sunmi-pay-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+  }
+
+  .sunmi-pay-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgb(20 11 31 / 0.68);
+    backdrop-filter: blur(4px);
+  }
+
+  .sunmi-pay-modal__dialog {
+    position: relative;
+    z-index: 1;
+    width: min(560px, 100%);
+    height: min(760px, calc(100dvh - 36px));
+    overflow: hidden;
+    border-radius: 22px;
+    background: #fff;
+    box-shadow: 0 30px 90px rgb(0 0 0 / 0.35);
+  }
+
+  .sunmi-pay-modal__iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: #fff;
+  }
+
+  .sunmi-pay-modal__close {
+    position: absolute;
+    z-index: 3;
+    top: 10px;
+    inset-inline-end: 10px;
+    width: 38px;
+    height: 38px;
+    border: 0;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.94);
+    color: #21172f;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgb(0 0 0 / 0.12);
+  }
+
+  .sunmi-pay-modal__status {
+    position: absolute;
+    z-index: 2;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: #fff;
+    color: var(--sunmi-order-text);
+    text-align: center;
+    font-weight: 800;
+  }
+
+  html.sunmi-pay-open {
+    overflow: hidden;
+  }
+
+  .sunmi-product-order__success {
+    display: grid;
+    place-items: center;
+    min-height: 340px;
+    padding: 36px 18px;
+    text-align: center;
+  }
+
+  .sunmi-product-order__success-icon {
+    display: grid;
+    place-items: center;
+    width: 68px;
+    height: 68px;
+    margin-bottom: 16px;
+    border-radius: 50%;
+    background: var(--sunmi-order-purple-soft);
+    color: var(--sunmi-order-purple);
+    font-size: 34px;
+    font-weight: 900;
+  }
+
+  .sunmi-product-order__success h3 {
+    margin: 0 0 8px;
+    color: var(--sunmi-order-text) !important;
+  }
+
+  .sunmi-product-order__success p {
+    margin: 0;
+    color: var(--sunmi-order-muted) !important;
+  }
+
+  [dir='rtl'] .sunmi-product-order__form,
+  [dir='rtl'] .sunmi-product-order__summary {
+    text-align: right;
+  }
+
+  @media screen and (max-width: 990px) {
+    .sunmi-product-order__shell {
+      grid-template-columns: 1fr;
+    }
+
+    .sunmi-product-order__summary {
+      position: static;
+    }
+  }
+
+  @media screen and (max-width: 749px) {
+    .sunmi-product-order {
+      padding:
+        max(28px, var(--sunmi-order-padding-top))
+        10px
+        max(42px, var(--sunmi-order-padding-bottom));
+    }
+
+    .sunmi-product-order__shell {
+      gap: 24px;
+      padding: 16px;
+      border-radius: 20px;
+    }
+
+    .sunmi-product-order__fields {
+      grid-template-columns: 1fr;
+    }
+
+    .sunmi-product-order__wide {
+      grid-column: auto;
+    }
+
+    .sunmi-product-order__summary {
+      padding: 16px;
+    }
+
+    .sunmi-product-order__payment-head {
+      display: grid;
+      align-items: start;
+    }
+
+    .sunmi-product-order__payment-option {
+      grid-template-columns: 22px minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .sunmi-product-order__payment-badges {
+      grid-column: 2;
+      justify-content: start;
+      margin-top: 2px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Customer order form",
+  "tag": "section",
+  "class": "sunmi-product-customer-form-section",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Add this section to any product template where you want the customer shipping form to appear."
+    },
+    {
+      "type": "color_scheme",
+      "id": "offer_form_color_scheme",
+      "label": "Color scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "range",
+      "id": "offer_form_padding_top",
+      "label": "Top padding",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 56
+    },
+    {
+      "type": "range",
+      "id": "offer_form_padding_bottom",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "default": 64
+    }
+  ],
+  "presets": [
+    {
+      "name": "Customer order form"
+    }
+  ]
+}
+{% endschema %}
