@@ -60,6 +60,64 @@ function safeEqualHex(a, b) {
   }
 }
 
+function kashierSignaturePayload(data) {
+  if (!data || typeof data !== "object" || !Array.isArray(data.signatureKeys)) {
+    return "";
+  }
+
+  const keys = [...new Set(
+    data.signatureKeys
+      .map((key) => String(key || "").trim())
+      .filter((key) => key && Object.prototype.hasOwnProperty.call(data, key))
+  )].sort();
+
+  if (!keys.length) return "";
+
+  return keys
+    .map((key) => {
+      const value = data[key] == null ? "" : String(data[key]);
+      return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+    })
+    .join("&");
+}
+
+function verifyKashierWebhookSignature(req) {
+  const received = String(req.get("x-kashier-signature") || "").trim();
+  const signaturePayload = kashierSignaturePayload(req.body?.data);
+
+  if (!received || !signaturePayload) return false;
+
+  const expected = crypto
+    .createHmac("sha256", env.KASHIER_API_KEY)
+    .update(signaturePayload)
+    .digest("hex");
+
+  return safeEqualHex(received, expected);
+}
+
+function getKashierSignedKeySet(data) {
+  return new Set(
+    Array.isArray(data?.signatureKeys)
+      ? data.signatureKeys.map((key) => String(key || "").trim()).filter(Boolean)
+      : [],
+  );
+}
+
+function getKashierOrderRef(data) {
+  const signedKeys = getKashierSignedKeySet(data);
+
+  for (const key of ["merchantOrderId", "orderReference"]) {
+    if (!signedKeys.has(key)) continue;
+
+    const ref = String(data?.[key] || "").trim();
+    if (/^SUNMI-D\d+$/.test(ref)) return ref;
+  }
+
+  // Never fall back to unsigned metadata for deciding which Shopify draft
+  // to complete.
+  return "";
+}
+
 function verifyAppProxy(req) {
   const url = new URL(req.originalUrl, env.PUBLIC_BASE_URL || "https://localhost");
   const params = new Map();
@@ -525,6 +583,12 @@ const DRAFT_STATUS_QUERY = `
       id
       name
       status
+      totalPriceSet {
+        shopMoney {
+          amount
+          currencyCode
+        }
+      }
       order {
         id
         name
@@ -547,6 +611,8 @@ async function getDraftStatus(ref) {
     draftStatus: draft.status,
     orderName: draft.order?.name || null,
     financialStatus: draft.order?.displayFinancialStatus || null,
+    totalAmount: draft?.totalPriceSet?.shopMoney?.amount || null,
+    currency: draft?.totalPriceSet?.shopMoney?.currencyCode || null,
   };
 }
 
@@ -698,48 +764,222 @@ app.get("/kashier/return", (req, res) => {
   <div class="box"><div class="spinner"></div><strong>Verifying payment…</strong></div>
   <script>
     try {
-      window.parent.postMessage(
-        { type: "SUNMI_KASHIER_RETURN", ref: ${JSON.stringify(ref)} },
-        ${JSON.stringify(targetOrigin)}
-      );
+      const message = { type: "SUNMI_KASHIER_RETURN", ref: ${JSON.stringify(ref)} };
+      const target = ${JSON.stringify(targetOrigin)};
+
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage(message, target);
+        window.setTimeout(() => window.close(), 350);
+      }
+
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage(message, target);
+      }
     } catch (_) {}
   </script>
 </body>
 </html>`);
 });
 
-/**
- * SECURITY NOTE
- * -------------
- * This endpoint deliberately FAILS CLOSED.
- *
- * We already know the Kashier Payment Session create request/response from the
- * merchant dashboard, but the exact webhook payload + signature verification
- * contract has not yet been supplied. Until it is confirmed from Kashier's own
- * dashboard documentation, this route captures a redacted test payload only
- * and DOES NOT call draftOrderComplete().
- *
- * After one TEST payment, inspect Coolify logs for:
- *   [KASHIER_WEBHOOK_CAPTURE]
- * and use Kashier's webhook-signature docs to implement exact verification.
- */
 app.post("/webhooks/kashier/:token", async (req, res) => {
   if (!env.KASHIER_WEBHOOK_TOKEN || req.params.token !== env.KASHIER_WEBHOOK_TOKEN) {
-    return json(res, 404, { ok: false });
+    return json(res, 404, { received: false });
+  }
+
+  const event = String(req.body?.event || "").toLowerCase();
+  const data = req.body?.data;
+
+  if (!data || typeof data !== "object") {
+    return json(res, 400, { received: false, error: "Invalid Kashier webhook body." });
+  }
+
+  if (!verifyKashierWebhookSignature(req)) {
+    console.error(
+      "[KASHIER_WEBHOOK_INVALID_SIGNATURE]",
+      JSON.stringify(redactSensitive(req.body || {})),
+    );
+    return json(res, 401, { received: false, error: "Invalid Kashier signature." });
   }
 
   console.log(
-    "[KASHIER_WEBHOOK_CAPTURE]",
-    JSON.stringify(redactSensitive(req.body || {})),
+    "[KASHIER_WEBHOOK_VERIFIED]",
+    JSON.stringify({
+      event,
+      data: redactSensitive(data),
+    }),
   );
 
-  if (env.KASHIER_WEBHOOK_AUTOCOMPLETE) {
-    console.error(
-      "[Sun-Mi] KASHIER_WEBHOOK_AUTOCOMPLETE=true is ignored until exact Kashier webhook verification is implemented.",
-    );
+  // Kashier can send pay/refund/authorize/void/capture events.
+  // Only a successful pay event may complete a Shopify order.
+  if (event !== "pay") {
+    return json(res, 200, { received: true, verified: true, ignored: true });
   }
 
-  return json(res, 200, { received: true });
+  const status = String(data.status || "").toUpperCase();
+  const responseCode = String(data.transactionResponseCode || "");
+  const successfulPayment = status === "SUCCESS" && responseCode === "00";
+
+  if (!successfulPayment) {
+    return json(res, 200, {
+      received: true,
+      verified: true,
+      completed: false,
+      paymentStatus: status || null,
+      transactionResponseCode: responseCode || null,
+    });
+  }
+
+  const signedKeys = getKashierSignedKeySet(data);
+  const requiredSignedFields = [
+    "amount",
+    "currency",
+    "status",
+    "transactionResponseCode",
+  ];
+
+  if (
+    requiredSignedFields.some((key) => !signedKeys.has(key)) ||
+    (!signedKeys.has("merchantOrderId") && !signedKeys.has("orderReference"))
+  ) {
+    console.error(
+      "[KASHIER_WEBHOOK_MISSING_SIGNED_FIELDS]",
+      JSON.stringify({ signatureKeys: [...signedKeys] }),
+    );
+    return json(res, 400, {
+      received: false,
+      verified: true,
+      error: "Required signed payment fields are missing.",
+    });
+  }
+
+  const ref = getKashierOrderRef(data);
+  if (!ref) {
+    console.error(
+      "[KASHIER_WEBHOOK_ORDER_REF_MISSING]",
+      JSON.stringify(redactSensitive(data)),
+    );
+    return json(res, 422, {
+      received: false,
+      verified: true,
+      error: "Could not resolve a signed Shopify draft reference.",
+    });
+  }
+
+  try {
+    const current = await getDraftStatus(ref);
+
+    if (!current.exists) {
+      throw new Error("Shopify draft order was not found.");
+    }
+
+    const paidCurrency = String(data.currency || "").toUpperCase();
+    const expectedCurrency = String(current.currency || "").toUpperCase();
+    const paidAmount = Number(data.amount);
+    const expectedAmount = Number(current.totalAmount);
+
+    const amountMatches =
+      Number.isFinite(paidAmount) &&
+      Number.isFinite(expectedAmount) &&
+      Math.abs(paidAmount - expectedAmount) < 0.005;
+
+    const currencyMatches =
+      paidCurrency &&
+      expectedCurrency &&
+      paidCurrency === expectedCurrency;
+
+    if (!amountMatches || !currencyMatches) {
+      console.error(
+        "[KASHIER_WEBHOOK_TOTAL_MISMATCH]",
+        JSON.stringify({
+          ref,
+          paidAmount: data.amount,
+          paidCurrency,
+          expectedAmount: current.totalAmount,
+          expectedCurrency,
+        }),
+      );
+
+      // The webhook is authentic, but it does not match this Shopify draft.
+      // A retry cannot fix a genuine total mismatch, so acknowledge it without
+      // completing the order and leave it for manual investigation.
+      return json(res, 200, {
+        received: true,
+        verified: true,
+        completed: false,
+        ref,
+        reason: "Payment total does not match Shopify draft.",
+      });
+    }
+
+    // Keep production completion behind a feature flag until one real webhook
+    // is observed in Coolify and its signed amount/currency format is confirmed.
+    if (!env.KASHIER_WEBHOOK_AUTOCOMPLETE) {
+      console.warn(
+        "[KASHIER_WEBHOOK_VERIFIED_NOT_COMPLETED]",
+        JSON.stringify({
+          ref,
+          status,
+          transactionResponseCode: responseCode,
+          amount: data.amount,
+          currency: paidCurrency,
+        }),
+      );
+
+      return json(res, 200, {
+        received: true,
+        verified: true,
+        matched: true,
+        completed: false,
+        ref,
+        reason: "KASHIER_WEBHOOK_AUTOCOMPLETE is disabled.",
+      });
+    }
+
+    // Idempotent handling for Kashier webhook retries.
+    if (current.completed) {
+      return json(res, 200, {
+        received: true,
+        verified: true,
+        completed: true,
+        ref,
+        orderName: current.orderName,
+        duplicate: true,
+      });
+    }
+
+    const draftId = draftGidFromOrderRef(ref);
+    if (!draftId) {
+      throw new Error("Invalid Shopify draft reference.");
+    }
+
+    // paymentPending=false completes the draft as paid.
+    const completed = await completeDraftOrder(draftId, false);
+
+    console.log(
+      "[KASHIER_ORDER_COMPLETED]",
+      JSON.stringify({
+        ref,
+        orderName: completed.name,
+        transactionId: data.transactionId || null,
+      }),
+    );
+
+    return json(res, 200, {
+      received: true,
+      verified: true,
+      completed: true,
+      ref,
+      orderName: completed.name,
+    });
+  } catch (error) {
+    console.error("[KASHIER_WEBHOOK_PROCESSING_ERROR]", error);
+    // Non-2xx makes Kashier retry according to its webhook contract.
+    return json(res, 500, {
+      received: false,
+      verified: true,
+      error: error.message || "Webhook processing failed.",
+    });
+  }
 });
 
 app.use((_req, res) => json(res, 404, { success: false, error: "Not found." }));
