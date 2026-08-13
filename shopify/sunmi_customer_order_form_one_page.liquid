@@ -365,13 +365,44 @@
     </div>
 
 
-    <div
-      class="sunmi-payment-return-status"
-      data-sunmi-pay-status
-      role="status"
-      aria-live="polite"
-      hidden
-    ></div>
+    <div class="sunmi-pay-modal" data-sunmi-pay-modal hidden>
+      <div class="sunmi-pay-modal__backdrop" data-sunmi-pay-close></div>
+
+      <div
+        class="sunmi-pay-modal__dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label="{{ sunmi_payment_heading }}"
+      >
+        <button
+          class="sunmi-pay-modal__close"
+          type="button"
+          data-sunmi-pay-close
+          aria-label="Close"
+        >×</button>
+
+        <div
+          class="sunmi-pay-modal__status"
+          data-sunmi-pay-status
+          role="status"
+          aria-live="polite"
+          hidden
+        ></div>
+
+        <iframe
+          class="sunmi-pay-modal__iframe"
+          data-sunmi-pay-iframe
+          title="{{ sunmi_payment_heading }}"
+          allow="payment *; clipboard-write"
+          referrerpolicy="strict-origin-when-cross-origin"
+        ></iframe>
+
+        <div class="sunmi-pay-modal__fallback">
+          <span data-sunmi-pay-fallback-text></span>
+          <button type="button" data-sunmi-pay-external></button>
+        </div>
+      </div>
+    </div>
 
     <script type="application/json" data-sunmi-product-variants>
       [
@@ -411,7 +442,12 @@
         const paymentOptions = [...root.querySelectorAll('[data-sunmi-payment-option]')];
         const shippingStatus = root.querySelector('[data-sunmi-shipping-status]');
         const shippingOptions = root.querySelector('[data-sunmi-shipping-options]');
+        const modal = root.querySelector('[data-sunmi-pay-modal]');
+        const payIframe = root.querySelector('[data-sunmi-pay-iframe]');
         const payStatus = root.querySelector('[data-sunmi-pay-status]');
+        const modalCloseButtons = [...root.querySelectorAll('[data-sunmi-pay-close]')];
+        const externalPaymentButton = root.querySelector('[data-sunmi-pay-external]');
+        const fallbackText = root.querySelector('[data-sunmi-pay-fallback-text]');
 
         let variants = [];
         let selectedShippingHandle = '';
@@ -419,7 +455,7 @@
         let quoteTimer = null;
         let paymentReturnOrigin = '';
         let activeOrderRef = '';
-        let paymentWindow = null;
+        let paymentSessionUrl = '';
         let paymentPollPromise = null;
 
         try {
@@ -791,52 +827,57 @@
                 : root.dataset.payNowLabel);
         };
 
-        const closePaymentWindow = () => {
-          try {
-            if (paymentWindow && !paymentWindow.closed) {
-              paymentWindow.close();
-            }
-          } catch (_) {}
-          paymentWindow = null;
+        const closeModal = () => {
+          if (!modal || !payIframe) return;
+
+          modal.hidden = true;
+          payIframe.src = 'about:blank';
+          payIframe.hidden = false;
+          paymentSessionUrl = '';
+
+          if (payStatus) {
+            payStatus.hidden = true;
+            payStatus.textContent = '';
+          }
+
+          document.documentElement.classList.remove('sunmi-pay-open');
         };
 
-        const openPaymentWindow = () => {
-          closePaymentWindow();
+        const openModal = (sessionUrl) => {
+          if (!modal || !payIframe || !sessionUrl) return false;
+
+          paymentSessionUrl = sessionUrl;
+
+          if (payStatus) {
+            payStatus.hidden = true;
+            payStatus.textContent = '';
+          }
+
+          payIframe.hidden = false;
+          payIframe.src = sessionUrl;
+          modal.hidden = false;
+          document.documentElement.classList.add('sunmi-pay-open');
+
+          return true;
+        };
+
+        const openExternalPayment = () => {
+          if (!paymentSessionUrl) return;
 
           const popup = window.open(
-            'about:blank',
+            paymentSessionUrl,
             'sunmi-kashier-payment',
             'popup=yes,width=1100,height=800,resizable=yes,scrollbars=yes'
           );
 
-          if (!popup) return null;
-
-          paymentWindow = popup;
-
-          try {
-            popup.document.title = 'Sun-Mi secure payment';
-          } catch (_) {}
-
-          try {
-            popup.focus();
-          } catch (_) {}
-
-          return popup;
-        };
-
-        const navigatePaymentWindow = (sessionUrl) => {
-          if (!paymentWindow || paymentWindow.closed) return false;
-
-          try {
-            paymentWindow.location.href = sessionUrl;
-            paymentWindow.focus();
-            return true;
-          } catch (_) {
-            return false;
+          if (popup) {
+            try { popup.focus(); } catch (_) {}
+          } else {
+            window.location.href = paymentSessionUrl;
           }
         };
         const showSuccess = (orderName) => {
-          closePaymentWindow();
+          closeModal();
           if (payStatus) {
             payStatus.hidden = true;
             payStatus.textContent = '';
@@ -968,10 +1009,33 @@
         );
 
 
+        modalCloseButtons.forEach((button) => {
+          button.addEventListener('click', closeModal);
+        });
+
+        externalPaymentButton?.addEventListener('click', openExternalPayment);
+
+        if (fallbackText && externalPaymentButton) {
+          if (language === 'ar') {
+            fallbackText.textContent = 'إذا لم يظهر نموذج الدفع داخل النافذة، افتحي صفحة الدفع الآمنة.';
+            externalPaymentButton.textContent = 'فتح صفحة الدفع';
+          } else {
+            fallbackText.textContent = 'If the payment form does not appear, open the secure payment page.';
+            externalPaymentButton.textContent = 'Open secure payment';
+          }
+        }
+
         window.addEventListener('message', (event) => {
           if (!paymentReturnOrigin || event.origin !== paymentReturnOrigin) return;
           if (event.data?.type !== 'SUNMI_KASHIER_RETURN') return;
           if (event.data?.ref && activeOrderRef && event.data.ref !== activeOrderRef) return;
+
+          if (payIframe) payIframe.hidden = true;
+          if (payStatus) {
+            payStatus.hidden = false;
+            payStatus.textContent = root.dataset.verifyingLabel;
+          }
+
           pollPaymentStatus();
         });
 
@@ -985,17 +1049,6 @@
           }
 
           if (!form.reportValidity()) return;
-
-          const selectedPaymentMethod = getPaymentMethod();
-
-          if (selectedPaymentMethod === 'kashier') {
-            paymentWindow = openPaymentWindow();
-
-            if (!paymentWindow) {
-              setError(root.dataset.popupBlockedLabel || root.dataset.errorLabel);
-              return;
-            }
-          }
 
           setProcessing(true);
 
@@ -1032,13 +1085,11 @@
             activeOrderRef = data.orderRef;
             paymentReturnOrigin = data.returnOrigin || '';
 
-            if (!navigatePaymentWindow(data.sessionUrl)) {
-              throw new Error(
-                root.dataset.popupBlockedLabel || root.dataset.errorLabel
-              );
+            if (!openModal(data.sessionUrl)) {
+              throw new Error(root.dataset.errorLabel);
             }
           } catch (error) {
-            closePaymentWindow();
+            closeModal();
             console.error('[Sun-Mi product order]', error);
             setError(error?.message || root.dataset.errorLabel);
           } finally {
@@ -1513,8 +1564,10 @@
   .sunmi-pay-modal__dialog {
     position: relative;
     z-index: 1;
-    width: min(560px, 100%);
-    height: min(760px, calc(100dvh - 36px));
+    display: flex;
+    flex-direction: column;
+    width: min(1040px, 100%);
+    height: min(820px, calc(100dvh - 36px));
     overflow: hidden;
     border-radius: 22px;
     background: #fff;
@@ -1523,9 +1576,37 @@
 
   .sunmi-pay-modal__iframe {
     width: 100%;
-    height: 100%;
+    min-height: 0;
+    flex: 1 1 auto;
     border: 0;
     background: #fff;
+  }
+
+  .sunmi-pay-modal__fallback {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 10px 58px 10px 16px;
+    border-top: 1px solid #eee7f6;
+    background: #fbf9ff;
+    color: #6f6579;
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .sunmi-pay-modal__fallback button {
+    border: 0;
+    border-radius: 10px;
+    padding: 9px 14px;
+    background: var(--sunmi-order-purple);
+    color: #fff;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
   }
 
   .sunmi-pay-modal__close {
@@ -1609,6 +1690,21 @@
   }
 
   @media screen and (max-width: 749px) {
+    .sunmi-pay-modal {
+      padding: 0;
+    }
+
+    .sunmi-pay-modal__dialog {
+      width: 100%;
+      height: 100dvh;
+      max-height: 100dvh;
+      border-radius: 0;
+    }
+
+    .sunmi-pay-modal__fallback {
+      padding-inline: 14px 54px;
+    }
+
     .sunmi-product-order {
       padding:
         max(28px, var(--sunmi-order-padding-top))
